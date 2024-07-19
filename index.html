@@ -40,6 +40,7 @@
 <body>
     <div class="join-game">
         <input type="text" id="playerName" placeholder="הכנס את שמך">
+        <input type="text" id="roomName" placeholder="הכנס שם חדר">
         <button onclick="joinGame()">הצטרף למשחק</button>
     </div>
     <div class="theme-input">
@@ -72,14 +73,20 @@
         let players = [];
         let drawings = [];
         let theme = '';
+        let roomName = '';
 
         function joinGame() {
             const playerName = document.getElementById('playerName').value;
-            if (playerName.trim() === "") {
-                alert("אנא הכנס את שמך");
+            roomName = document.getElementById('roomName').value;
+            if (playerName.trim() === "" || roomName.trim() === "") {
+                alert("אנא הכנס את שמך ושם החדר");
                 return;
             }
-            players.push({ name: playerName, drawing: '' });
+            const roomData = JSON.parse(localStorage.getItem(roomName)) || { players: [], drawings: [], theme: '' };
+            roomData.players.push({ name: playerName, drawing: '' });
+            localStorage.setItem(roomName, JSON.stringify(roomData));
+            players = roomData.players;
+
             if (players.length >= 2) {
                 startThemeSelection();
             } else {
@@ -103,6 +110,9 @@
             document.getElementById('themeDisplay').innerText = `נושא הציור: ${theme}`;
             document.querySelector('.theme-input').style.display = 'none';
             document.querySelector('.start-game').style.display = 'flex';
+            const roomData = JSON.parse(localStorage.getItem(roomName));
+            roomData.theme = theme;
+            localStorage.setItem(roomName, JSON.stringify(roomData));
         }
 
         canvas.addEventListener('mousedown', startDrawing);
@@ -138,9 +148,13 @@
 
         function submitDrawing() {
             const dataURL = canvas.toDataURL();
-            const player = players.find(p => p.drawing === '');
+            const roomData = JSON.parse(localStorage.getItem(roomName));
+            const player = roomData.players.find(p => p.drawing === '');
             player.drawing = dataURL;
-            drawings.push(player);
+            roomData.drawings.push(player);
+            localStorage.setItem(roomName, JSON.stringify(roomData));
+            drawings = roomData.drawings;
+
             if (drawings.length === players.length) {
                 showRankings();
             } else {
